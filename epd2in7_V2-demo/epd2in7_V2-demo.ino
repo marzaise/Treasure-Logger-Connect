@@ -25,7 +25,7 @@ void setup()
         while (1);
     }
     printf("Paint_NewImage\r\n");
-    Paint_NewImage(BlackImage, EPD_2IN7_WIDTH, EPD_2IN7_HEIGHT, 270, WHITE);
+    Paint_NewImage(BlackImage, EPD_2IN7_V2_WIDTH, EPD_2IN7_V2_HEIGHT, 270, WHITE);
 
 
     free(BlackImage);
