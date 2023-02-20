@@ -1,40 +1,12 @@
-/**
-  ******************************************************************************
-  * @file    epd.h
-  * @author  Waveshare Team
-  * @version V1.0.0
-  * @date    23-January-2018
-  * @brief   This file provides e-Paper driver functions
-  *           void EPD_2IN7_V2_SendCommand(byte command);
-  *           void EPD_2IN7_V2_SendData(byte data);
-  *           void EPD_WaitUntilIdle();
-  *           void EPD_Send_1(byte c, byte v1);
-  *           void EPD_Send_2(byte c, byte v1, byte v2);
-  *           void EPD_Send_3(byte c, byte v1, byte v2, byte v3);
-  *           void EPD_Send_4(byte c, byte v1, byte v2, byte v3, byte v4);
-  *           void EPD_Send_5(byte c, byte v1, byte v2, byte v3, byte v4, byte v5);
-  *           void EPD_Reset();
-  *           void EPD_dispInit();
-  *           
-  *          varualbes:
-  *           EPD_dispLoad;                - pointer on current loading function
-  *           EPD_dispIndex;               - index of current e-Paper
-  *           EPD_dispInfo EPD_dispMass[]; - array of e-Paper properties
-  *           
-  ******************************************************************************
-  */
 /* SPI pin definition --------------------------------------------------------*/
-#define PIN_SPI_SCK  13
-#define PIN_SPI_DIN  14
-#define PIN_SPI_CS   15
-#define PIN_SPI_BUSY 25//19
-#define PIN_SPI_RST  26//21
-#define PIN_SPI_DC   27//22
+#define EPD_SCK_PIN  13
+#define EPD_MOSI_PIN  14
+#define EPD_CS_PIN   15
+#define EPD_BUSY_PIN 25//19
+#define EPD_RST_PIN  26//21
+#define EPD_DC_PIN   27//22
 
 /* Pin level definition ------------------------------------------------------*/
-#define LOW             0
-#define HIGH            1
-
 #define GPIO_PIN_SET   1
 #define GPIO_PIN_RESET 0
 
@@ -47,16 +19,16 @@ void EPD_initSPI()
     //Serial.println(SPI._spi_num);
     //Serial.println(SPI.get);
 
-    pinMode(PIN_SPI_BUSY,  INPUT);
-    pinMode(PIN_SPI_RST , OUTPUT);
-    pinMode(PIN_SPI_DC  , OUTPUT);
+    pinMode(EPD_BUSY_PIN,  INPUT);
+    pinMode(EPD_RST_PIN , OUTPUT);
+    pinMode(EPD_DC_PIN  , OUTPUT);
     
-    pinMode(PIN_SPI_SCK, OUTPUT);
-    pinMode(PIN_SPI_DIN, OUTPUT);
-    pinMode(PIN_SPI_CS , OUTPUT);
+    pinMode(EPD_SCK_PIN, OUTPUT);
+    pinMode(EPD_MOSI_PIN, OUTPUT);
+    pinMode(EPD_CS_PIN , OUTPUT);
 
-    digitalWrite(PIN_SPI_CS , HIGH);
-    digitalWrite(PIN_SPI_SCK, LOW);
+    digitalWrite(EPD_CS_PIN , 1);
+    digitalWrite(EPD_SCK_PIN, 0);
     //SPI.begin(); 
 }
 
@@ -64,20 +36,20 @@ void EPD_initSPI()
 void EpdSpiTransferCallback(byte data) 
 {
     //SPI.beginTransaction(spi_settings);
-    digitalWrite(PIN_SPI_CS, GPIO_PIN_RESET);
+    digitalWrite(EPD_CS_PIN, GPIO_PIN_RESET);
 
     for (int i = 0; i < 8; i++)
     {
-        if ((data & 0x80) == 0) digitalWrite(PIN_SPI_DIN, GPIO_PIN_RESET); 
-        else                    digitalWrite(PIN_SPI_DIN, GPIO_PIN_SET);
+        if ((data & 0x80) == 0) digitalWrite(EPD_MOSI_PIN, GPIO_PIN_RESET); 
+        else                    digitalWrite(EPD_MOSI_PIN, GPIO_PIN_SET);
 
         data <<= 1;
-        digitalWrite(PIN_SPI_SCK, GPIO_PIN_SET);     
-        digitalWrite(PIN_SPI_SCK, GPIO_PIN_RESET);
+        digitalWrite(EPD_SCK_PIN, GPIO_PIN_SET);     
+        digitalWrite(EPD_SCK_PIN, GPIO_PIN_RESET);
     }
 
     //SPI.transfer(data);
-    digitalWrite(PIN_SPI_CS, GPIO_PIN_SET);
+    digitalWrite(EPD_CS_PIN, GPIO_PIN_SET);
     //SPI.endTransaction();
 }
 
@@ -93,14 +65,14 @@ byte lut_red1 [] = { 15, 0x03, 0x1D, 0x01, 0x01, 0x08, 0x23, 0x37, 0x37, 0x01, 0
 /* Sending a byte as a command -----------------------------------------------*/
 void EPD_2IN7_V2_SendCommand(byte command) 
 {
-    digitalWrite(PIN_SPI_DC, LOW);
+    digitalWrite(EPD_DC_PIN, 0);
     EpdSpiTransferCallback(command);
 }
 
 /* Sending a byte as a data --------------------------------------------------*/
 void EPD_2IN7_V2_SendData(byte data) 
 {
-    digitalWrite(PIN_SPI_DC, HIGH);
+    digitalWrite(EPD_DC_PIN, 1);
     EpdSpiTransferCallback(data);
 }
 
@@ -109,7 +81,7 @@ void EPD_2IN7_V2_SendData(byte data)
 void EPD_WaitUntilIdle() 
 {
     //0: busy, 1: idle
-    while(digitalRead(PIN_SPI_BUSY) == 0) delay(100);  
+    while(digitalRead(EPD_BUSY_PIN) == 0) delay(100);  
 
 }
 
@@ -117,24 +89,21 @@ void EPD_WaitUntilIdle()
 void EPD_WaitUntilIdle_high() 
 {
     //1: busy, 0: idle
-    while(digitalRead(PIN_SPI_BUSY) == 1) delay(100);    
+    while(digitalRead(EPD_BUSY_PIN) == 1) delay(100);    
 }
 
 /* This function is used to 'wake up" the e-Paper from the deep sleep mode ---*/
-void EPD_Reset() 
+static void EPD_2IN7_V2_Reset(void)
 {
-    digitalWrite(PIN_SPI_RST, HIGH); 
-    delay(200);    
-	
-    digitalWrite(PIN_SPI_RST, LOW);    
-    delay(200);
-    
-    digitalWrite(PIN_SPI_RST, HIGH); 
-    delay(200);    
+    digitalWrite(EPD_RST_PIN, 1);
+    delay(20);
+    digitalWrite(EPD_RST_PIN, 0);
+    delay(2);
+    digitalWrite(EPD_RST_PIN, 1);
+    delay(20);
 }
 
 /* e-Paper initialization functions ------------------------------------------*/ 
-#include "epd2in7.h"
 bool EPD_invert;           // If true, then image data bits must be inverted
 int  EPD_dispIndex;        // The index of the e-Paper's type
 int  EPD_dispX, EPD_dispY; // Current pixel's coordinates (for 2.13 only)
@@ -163,7 +132,6 @@ void EPD_loadA()
     }
 }
 
-
 /* Show image and turn to deep sleep mode (a-type, 4.2 and 2.7 e-Paper) ------*/
 void EPD_showA() 
 {
@@ -179,8 +147,6 @@ void EPD_showA()
     EPD_WaitUntilIdle();
 }
 
-
-
 /* The set of pointers on 'init', 'load' and 'show' functions, title and code */
 struct EPD_dispInfo
 {
@@ -191,6 +157,44 @@ struct EPD_dispInfo
     void(*show)();// Show and sleep
     char*title;   // Title of an e-Paper
 };
+
+int EPD_2IN7_V2_Init(void)
+{
+    EPD_2IN7_V2_Reset();
+    EPD_WaitUntilIdle_high();
+
+    EPD_2IN7_V2_SendCommand(0x12); //SWRESET
+    EPD_WaitUntilIdle_high();
+
+    EPD_2IN7_V2_SendCommand(0x45); //set Ram-Y address start/end position          
+    EPD_2IN7_V2_SendData(0x00);
+    EPD_2IN7_V2_SendData(0x00);
+    EPD_2IN7_V2_SendData(0x07); //0x0107-->(263+1)=264
+    EPD_2IN7_V2_SendData(0x01);
+
+    EPD_2IN7_V2_SendCommand(0x4F);   // set RAM y address count to 0;    
+    EPD_2IN7_V2_SendData(0x00);
+    EPD_2IN7_V2_SendData(0x00);
+
+    EPD_2IN7_V2_SendCommand(0x11);   // data entry mode
+    EPD_2IN7_V2_SendData(0x03);
+
+    EPD_2IN7_V2_SendCommand(0x24);
+    delay(2);
+	return 0;
+}
+
+void EPD_2IN7_V2_Show(void)
+{
+    EPD_2IN7_V2_SendCommand(0x22);  //Display Update Control
+    EPD_2IN7_V2_SendData(0XF7);
+    EPD_2IN7_V2_SendCommand(0x20);  //Activate Display Update Sequence
+    EPD_WaitUntilIdle_high();
+    delay(2);
+    Serial.print("EPD_2IN7_V2_Show END\r\n");
+    EPD_2IN7_V2_SendCommand(0X07);  	//deep sleep
+    EPD_2IN7_V2_SendData(0xA5);
+}
 
 /* Array of sets describing the usage of e-Papers ----------------------------*/
 EPD_dispInfo EPD_dispMass[] =
@@ -215,3 +219,4 @@ void EPD_dispInit()
     EPD_invert = false;
     
 }
+
