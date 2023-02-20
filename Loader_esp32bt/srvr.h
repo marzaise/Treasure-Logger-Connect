@@ -116,7 +116,7 @@ bool Srvr__loop()
         Srvr__length = 0;
 
         // Getting of e-Paper's type
-        EPD_dispIndex = Buff__bufArr[1];
+        EPD_dispIndex = 0;
 
         // Print log message: initialization of e-Paper (e-Paper's type)
         Serial.printf("<<<EPD %s", EPD_dispMass[EPD_dispIndex].title);
@@ -166,7 +166,7 @@ bool Srvr__loop()
         int code = EPD_dispMass[EPD_dispIndex].next;
 
         // e-Paper '2.7' (index 8) needs inverting of image data bits
-        EPD_invert = (EPD_dispIndex == 8);
+        EPD_invert = (EPD_dispIndex == 0);
 
         // If the instruction code isn't '-1', then...
         if (code != -1)
