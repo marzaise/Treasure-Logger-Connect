@@ -5,8 +5,8 @@
   * @version V1.0.0
   * @date    23-January-2018
   * @brief   This file provides e-Paper driver functions
-  *           void EPD_SendCommand(byte command);
-  *           void EPD_SendData(byte data);
+  *           void EPD_2IN7_V2_SendCommand(byte command);
+  *           void EPD_2IN7_V2_SendData(byte data);
   *           void EPD_WaitUntilIdle();
   *           void EPD_Send_1(byte c, byte v1);
   *           void EPD_Send_2(byte c, byte v1, byte v2);
@@ -108,14 +108,14 @@ byte lut_red0 [] = { 15, 0x83, 0x5D, 0x01, 0x81, 0x48, 0x23, 0x77, 0x77, 0x01, 0
 byte lut_red1 [] = { 15, 0x03, 0x1D, 0x01, 0x01, 0x08, 0x23, 0x37, 0x37, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 /* Sending a byte as a command -----------------------------------------------*/
-void EPD_SendCommand(byte command) 
+void EPD_2IN7_V2_SendCommand(byte command) 
 {
     digitalWrite(PIN_SPI_DC, LOW);
     EpdSpiTransferCallback(command);
 }
 
 /* Sending a byte as a data --------------------------------------------------*/
-void EPD_SendData(byte data) 
+void EPD_2IN7_V2_SendData(byte data) 
 {
     digitalWrite(PIN_SPI_DC, HIGH);
     EpdSpiTransferCallback(data);
@@ -140,56 +140,56 @@ void EPD_WaitUntilIdle_high()
 /* Send a one-argument command -----------------------------------------------*/
 void EPD_Send_1(byte c, byte v1)
 {
-    EPD_SendCommand(c);
-    EPD_SendData(v1);
+    EPD_2IN7_V2_SendCommand(c);
+    EPD_2IN7_V2_SendData(v1);
 }
 
 /* Send a two-arguments command ----------------------------------------------*/
 void EPD_Send_2(byte c, byte v1, byte v2)
 {
-    EPD_SendCommand(c);
-    EPD_SendData(v1);
-    EPD_SendData(v2);
+    EPD_2IN7_V2_SendCommand(c);
+    EPD_2IN7_V2_SendData(v1);
+    EPD_2IN7_V2_SendData(v2);
 }
 
 /* Send a three-arguments command --------------------------------------------*/
 void EPD_Send_3(byte c, byte v1, byte v2, byte v3)
 {
-    EPD_SendCommand(c);
-    EPD_SendData(v1);
-    EPD_SendData(v2);
-    EPD_SendData(v3);
+    EPD_2IN7_V2_SendCommand(c);
+    EPD_2IN7_V2_SendData(v1);
+    EPD_2IN7_V2_SendData(v2);
+    EPD_2IN7_V2_SendData(v3);
 }
 
 /* Send a four-arguments command ---------------------------------------------*/
 void EPD_Send_4(byte c, byte v1, byte v2, byte v3, byte v4)
 {
-    EPD_SendCommand(c);
-    EPD_SendData(v1);
-    EPD_SendData(v2);
-    EPD_SendData(v3);
-    EPD_SendData(v4);
+    EPD_2IN7_V2_SendCommand(c);
+    EPD_2IN7_V2_SendData(v1);
+    EPD_2IN7_V2_SendData(v2);
+    EPD_2IN7_V2_SendData(v3);
+    EPD_2IN7_V2_SendData(v4);
 }
 
 /* Send a five-arguments command ---------------------------------------------*/
 void EPD_Send_5(byte c, byte v1, byte v2, byte v3, byte v4, byte v5)
 {
-    EPD_SendCommand(c);
-    EPD_SendData(v1);
-    EPD_SendData(v2);
-    EPD_SendData(v3);
-    EPD_SendData(v4);
-    EPD_SendData(v5);
+    EPD_2IN7_V2_SendCommand(c);
+    EPD_2IN7_V2_SendData(v1);
+    EPD_2IN7_V2_SendData(v2);
+    EPD_2IN7_V2_SendData(v3);
+    EPD_2IN7_V2_SendData(v4);
+    EPD_2IN7_V2_SendData(v5);
 }
 
 /* Writting lut-data into the e-Paper ----------------------------------------*/
 void EPD_lut(byte c, byte l, byte*p)
 {
     // lut-data writting initialization
-    EPD_SendCommand(c);
+    EPD_2IN7_V2_SendCommand(c);
 
     // lut-data writting doing
-    for (int i = 0; i < l; i++, p++) EPD_SendData(*p);
+    for (int i = 0; i < l; i++, p++) EPD_2IN7_V2_SendData(*p);
 }
 
 /* Writting lut-data of the black-white channel ------------------------------*/
@@ -246,7 +246,7 @@ void EPD_loadA()
         if (EPD_invert) value = ~value;
 
         // Write the byte into e-Paper's memory
-        EPD_SendData((byte)value);
+        EPD_2IN7_V2_SendData((byte)value);
 
         // Increment the current byte index on 2 characters
         pos++;
@@ -268,7 +268,7 @@ void EPD_loadAFilp()
         if (EPD_invert) value = ~value;
 
         // Write the byte into e-Paper's memory
-        EPD_SendData(~(byte)value);
+        EPD_2IN7_V2_SendData(~(byte)value);
 
         // Increment the current byte index on 2 characters
         pos++;
@@ -281,12 +281,12 @@ void EPD_showA()
 {
     // Refresh
     EPD_Send_1(0x22, 0xC4);//DISPLAY_UPDATE_CONTROL_2
-    EPD_SendCommand(0x20);//MASTER_ACTIVATION
-    EPD_SendCommand(0xFF);//TERMINATE_FRAME_READ_WRITE
+    EPD_2IN7_V2_SendCommand(0x20);//MASTER_ACTIVATION
+    EPD_2IN7_V2_SendCommand(0xFF);//TERMINATE_FRAME_READ_WRITE
     EPD_WaitUntilIdle();
 
     // Sleep
-    EPD_SendCommand(0x10);//DEEP_SLEEP_MODE
+    EPD_2IN7_V2_SendCommand(0x10);//DEEP_SLEEP_MODE
     EPD_WaitUntilIdle();
 }
 

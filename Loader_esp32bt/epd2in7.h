@@ -52,12 +52,12 @@ int EPD_Init_2in7()
 {
     EPD_Reset();
     
-    EPD_SendCommand(0x01);//POWER_SETTING
-    EPD_SendData(0x03);   // VDS_EN, VDG_EN
-    EPD_SendData(0x00);   // VCOM_HV, VGHL_LV[1], VGHL_LV[0]
-    EPD_SendData(0x2b);   // VDH
-    EPD_SendData(0x2b);   // VDL
-    EPD_SendData(0x09);   // VDHR
+    EPD_2IN7_V2_SendCommand(0x01);//POWER_SETTING
+    EPD_2IN7_V2_SendData(0x03);   // VDS_EN, VDG_EN
+    EPD_2IN7_V2_SendData(0x00);   // VCOM_HV, VGHL_LV[1], VGHL_LV[0]
+    EPD_2IN7_V2_SendData(0x2b);   // VDH
+    EPD_2IN7_V2_SendData(0x2b);   // VDL
+    EPD_2IN7_V2_SendData(0x09);   // VDHR
     
     EPD_Send_3(0x06, 0x07, 0x07, 0x17);//BOOSTER_SOFT_START
     
@@ -71,7 +71,7 @@ int EPD_Init_2in7()
     EPD_Send_2(0xF8, 0x73, 0x41);
     
     EPD_Send_1(0x16, 0x00);//PARTIAL_DISPLAY_REFRESH
-    EPD_SendCommand(0x04);//POWER_ON
+    EPD_2IN7_V2_SendCommand(0x04);//POWER_ON
     EPD_WaitUntilIdle();
 
     EPD_Send_1(0x00, 0xAF);//PANEL_SETTING: KW-BF, KWR-AF, BWROTP 0f
@@ -85,11 +85,11 @@ int EPD_Init_2in7()
     EPD_lut(0x23,42,&lut_wb_2in7[0]);// LUT_WHITE_TO_BLACK
     EPD_lut(0x24,42,&lut_bb_2in7[0]);// LUT_BLACK_TO_BLACK
 
-    EPD_SendCommand(0x10);//DATA_START_TRANSMISSION_1  
+    EPD_2IN7_V2_SendCommand(0x10);//DATA_START_TRANSMISSION_1  
     delay(2);
-    for(int i = 0; i < 176*264; i++)EPD_SendData(0xFF);//Red channel
+    for(int i = 0; i < 176*264; i++)EPD_2IN7_V2_SendData(0xFF);//Red channel
 
-    EPD_SendCommand(0x13);//DATA_START_TRANSMISSION_2
+    EPD_2IN7_V2_SendCommand(0x13);//DATA_START_TRANSMISSION_2
     delay(2);
     return 0;
 }
@@ -99,37 +99,37 @@ int EPD_2IN7_V2_Init(void)
     EPD_Reset();
     EPD_WaitUntilIdle_high();
 
-    EPD_SendCommand(0x12); //SWRESET
+    EPD_2IN7_V2_SendCommand(0x12); //SWRESET
     EPD_WaitUntilIdle_high();
 
-    EPD_SendCommand(0x45); //set Ram-Y address start/end position          
-    EPD_SendData(0x00);
-    EPD_SendData(0x00);
-    EPD_SendData(0x07); //0x0107-->(263+1)=264
-    EPD_SendData(0x01);
+    EPD_2IN7_V2_SendCommand(0x45); //set Ram-Y address start/end position          
+    EPD_2IN7_V2_SendData(0x00);
+    EPD_2IN7_V2_SendData(0x00);
+    EPD_2IN7_V2_SendData(0x07); //0x0107-->(263+1)=264
+    EPD_2IN7_V2_SendData(0x01);
 
-    EPD_SendCommand(0x4F);   // set RAM y address count to 0;    
-    EPD_SendData(0x00);
-    EPD_SendData(0x00);
+    EPD_2IN7_V2_SendCommand(0x4F);   // set RAM y address count to 0;    
+    EPD_2IN7_V2_SendData(0x00);
+    EPD_2IN7_V2_SendData(0x00);
 
-    EPD_SendCommand(0x11);   // data entry mode
-    EPD_SendData(0x03);
+    EPD_2IN7_V2_SendCommand(0x11);   // data entry mode
+    EPD_2IN7_V2_SendData(0x03);
 
-    EPD_SendCommand(0x24);
+    EPD_2IN7_V2_SendCommand(0x24);
     delay(2);
 	return 0;
 }
 
 void EPD_2IN7_V2_Show(void)
 {
-    EPD_SendCommand(0x22);  //Display Update Control
-    EPD_SendData(0XF7);
-    EPD_SendCommand(0x20);  //Activate Display Update Sequence
+    EPD_2IN7_V2_SendCommand(0x22);  //Display Update Control
+    EPD_2IN7_V2_SendData(0XF7);
+    EPD_2IN7_V2_SendCommand(0x20);  //Activate Display Update Sequence
     EPD_WaitUntilIdle_high();
     delay(2);
     Serial.print("EPD_2IN7_V2_Show END\r\n");
-    EPD_SendCommand(0X07);  	//deep sleep
-    EPD_SendData(0xA5);
+    EPD_2IN7_V2_SendCommand(0X07);  	//deep sleep
+    EPD_2IN7_V2_SendData(0xA5);
 }
 
 
@@ -177,7 +177,7 @@ int EPD_Init_2in7b()
 {
     EPD_Reset();
 
-    EPD_SendCommand(0x04);//POWER_ON
+    EPD_2IN7_V2_SendCommand(0x04);//POWER_ON
     EPD_WaitUntilIdle();
 
     EPD_Send_1(0x00, 0xAF);//PANEL_SETTING
@@ -204,7 +204,7 @@ int EPD_Init_2in7b()
     EPD_Send_4(0x61, 0, 176, 1, 8);// TCON_RESOLUTION: HI(W), LO(W), HI(H), LO(H)
     EPD_Send_1(0x16, 0x00);//PARTIAL_DISPLAY_REFRESH); 
 
-    EPD_SendCommand(0x10);//DATA_START_TRANSMISSION_1
+    EPD_2IN7_V2_SendCommand(0x10);//DATA_START_TRANSMISSION_1
     delay(2);
    
     return 0;
@@ -215,7 +215,7 @@ int EPD_Init_2in7b_V2()
     EPD_Reset();
 
 	EPD_WaitUntilIdle_high();
-	EPD_SendCommand(0x12);    
+	EPD_2IN7_V2_SendCommand(0x12);    
 	EPD_WaitUntilIdle_high();
 	
 	EPD_Send_3(0x00, 0x27, 0x01, 0x00);    
@@ -228,13 +228,13 @@ int EPD_Init_2in7b_V2()
     EPD_Send_1(0x4E, 0x00); // SET_RAM_X_ADDRESS_COUNTER
     EPD_Send_2(0x4F, 0x00, 0x00); // SET_RAM_Y_ADDRESS_COUNTER
    
-	EPD_SendCommand(0x24);
+	EPD_2IN7_V2_SendCommand(0x24);
     return 0;
 }
 
 void EPD_2in7b_V2_Show()
 {
-	EPD_SendCommand(0x20);
+	EPD_2IN7_V2_SendCommand(0x20);
 	EPD_WaitUntilIdle_high();
 	EPD_Send_1(0x10, 0x01);   
 }

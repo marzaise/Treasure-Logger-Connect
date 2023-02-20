@@ -14,7 +14,7 @@ void setup()
     printf("e-Paper Init and Clear...\r\n");
     EPD_2IN7_V2_Init();
     EPD_2IN7_V2_Clear();
-    DEV_Delay_ms(500);
+    delay(500);
 
     //Create a new image cache
     UBYTE *BlackImage;
@@ -58,7 +58,7 @@ void setup()
     Paint_Clear(WHITE);
     Paint_DrawBitMap(gImage_2in7);
     EPD_2IN7_V2_Display(BlackImage);
-    DEV_Delay_ms(500);
+    delay(500);
 #endif
 
 #if 1  // Drawing on the image
@@ -96,7 +96,7 @@ void setup()
     Paint_DrawString_CN(130, 20, "微雪电子", &Font24CN, WHITE, BLACK);
 
     EPD_2IN7_V2_Display_Base(BlackImage);
-    DEV_Delay_ms(3000);
+    delay(3000);
 #endif
 
 #if 1  // Fast Drawing on the image
@@ -118,7 +118,7 @@ void setup()
     Paint_Clear(WHITE);
     Paint_DrawBitMap(gImage_2in7);
     EPD_2IN7_V2_Display_Fast(BlackImage);
-    DEV_Delay_ms(500);
+    delay(500);
 
 
     // 2.Drawing on the image
@@ -150,7 +150,7 @@ void setup()
     Paint_DrawString_CN(130, 20, "微雪电子", &Font24CN, WHITE, BLACK);
 
     EPD_2IN7_V2_Display_Fast(BlackImage);
-    DEV_Delay_ms(3000);
+    delay(3000);
 
     
 
@@ -200,7 +200,7 @@ void setup()
         }
     printf("Part refresh...\r\n");
         EPD_2IN7_V2_Display_Partial(BlackImage, 60, 134, 110, 254); // Xstart must be a multiple of 8
-        DEV_Delay_ms(500);
+        delay(500);
     }
 #endif
 
@@ -239,7 +239,7 @@ void setup()
     Paint_DrawString_CN(150, 60,"你好abc", &Font12CN, GRAY1, GRAY4);
     Paint_DrawString_CN(10, 130, "微雪电子", &Font24CN, GRAY1, GRAY4);
     EPD_2IN7_V2_4GrayDisplay(BlackImage);
-    DEV_Delay_ms(3000);
+    delay(3000);
 
 #endif
 
@@ -251,7 +251,7 @@ void setup()
     EPD_2IN7_V2_Sleep();
     free(BlackImage);
     BlackImage = NULL;
-    DEV_Delay_ms(2000);//important, at least 2s
+    delay(2000);//important, at least 2s
     // close 5V
     printf("close 5V, Module enters 0 power consumption ...\r\n");
 

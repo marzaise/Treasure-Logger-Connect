@@ -23,7 +23,7 @@ int Buff__getByte(int index)
     return Buff__bufArr[index];
 }
 
-/* Reads a byte from the buffer at specified position ------------------------*/
+/* Reads a byte from the buffer at specifipinModeed position ------------------------*/
 int Buff__getWord(int index)
 {
     if (index + 1 >= Buff__SIZE) return -1;

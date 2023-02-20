@@ -175,7 +175,7 @@ bool Srvr__loop()
             Serial.printf(" %d", code);
 
             // Do the selection of the next data channel
-            EPD_SendCommand(code);
+            EPD_2IN7_V2_SendCommand(code);
             delay(2);
         }
 
