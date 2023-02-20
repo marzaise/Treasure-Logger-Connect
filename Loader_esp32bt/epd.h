@@ -60,23 +60,6 @@ void EPD_initSPI()
     //SPI.begin(); 
 }
 
-/* Lut mono ------------------------------------------------------------------*/
-byte lut_full_mono[] =
-{
-    0x02, 0x02, 0x01, 0x11, 0x12, 0x12, 0x22, 0x22, 
-    0x66, 0x69, 0x69, 0x59, 0x58, 0x99, 0x99, 0x88, 
-    0x00, 0x00, 0x00, 0x00, 0xF8, 0xB4, 0x13, 0x51, 
-    0x35, 0x51, 0x51, 0x19, 0x01, 0x00
-};
-
-byte lut_partial_mono[] =
-{
-    0x10, 0x18, 0x18, 0x08, 0x18, 0x18, 0x08, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x13, 0x14, 0x44, 0x12, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-
 /* The procedure of sending a byte to e-Paper by SPI -------------------------*/
 void EpdSpiTransferCallback(byte data) 
 {
@@ -137,79 +120,6 @@ void EPD_WaitUntilIdle_high()
     while(digitalRead(PIN_SPI_BUSY) == 1) delay(100);    
 }
 
-/* Send a one-argument command -----------------------------------------------*/
-void EPD_Send_1(byte c, byte v1)
-{
-    EPD_2IN7_V2_SendCommand(c);
-    EPD_2IN7_V2_SendData(v1);
-}
-
-/* Send a two-arguments command ----------------------------------------------*/
-void EPD_Send_2(byte c, byte v1, byte v2)
-{
-    EPD_2IN7_V2_SendCommand(c);
-    EPD_2IN7_V2_SendData(v1);
-    EPD_2IN7_V2_SendData(v2);
-}
-
-/* Send a three-arguments command --------------------------------------------*/
-void EPD_Send_3(byte c, byte v1, byte v2, byte v3)
-{
-    EPD_2IN7_V2_SendCommand(c);
-    EPD_2IN7_V2_SendData(v1);
-    EPD_2IN7_V2_SendData(v2);
-    EPD_2IN7_V2_SendData(v3);
-}
-
-/* Send a four-arguments command ---------------------------------------------*/
-void EPD_Send_4(byte c, byte v1, byte v2, byte v3, byte v4)
-{
-    EPD_2IN7_V2_SendCommand(c);
-    EPD_2IN7_V2_SendData(v1);
-    EPD_2IN7_V2_SendData(v2);
-    EPD_2IN7_V2_SendData(v3);
-    EPD_2IN7_V2_SendData(v4);
-}
-
-/* Send a five-arguments command ---------------------------------------------*/
-void EPD_Send_5(byte c, byte v1, byte v2, byte v3, byte v4, byte v5)
-{
-    EPD_2IN7_V2_SendCommand(c);
-    EPD_2IN7_V2_SendData(v1);
-    EPD_2IN7_V2_SendData(v2);
-    EPD_2IN7_V2_SendData(v3);
-    EPD_2IN7_V2_SendData(v4);
-    EPD_2IN7_V2_SendData(v5);
-}
-
-/* Writting lut-data into the e-Paper ----------------------------------------*/
-void EPD_lut(byte c, byte l, byte*p)
-{
-    // lut-data writting initialization
-    EPD_2IN7_V2_SendCommand(c);
-
-    // lut-data writting doing
-    for (int i = 0; i < l; i++, p++) EPD_2IN7_V2_SendData(*p);
-}
-
-/* Writting lut-data of the black-white channel ------------------------------*/
-void EPD_SetLutBw(byte*c20, byte*c21, byte*c22, byte*c23, byte*c24) 
-{
-    EPD_lut(0x20, *c20, c20 + 1);//g vcom 
-    EPD_lut(0x21, *c21, c21 + 1);//g ww -- 
-    EPD_lut(0x22, *c22, c22 + 1);//g bw r
-    EPD_lut(0x23, *c23, c23 + 1);//g wb w
-    EPD_lut(0x24, *c24, c24 + 1);//g bb b
-}
-
-/* Writting lut-data of the red channel --------------------------------------*/
-void EPD_SetLutRed(byte*c25, byte*c26, byte*c27) 
-{
-    EPD_lut(0x25, *c25, c25 + 1);
-    EPD_lut(0x26, *c26, c26 + 1);
-    EPD_lut(0x27, *c27, c27 + 1);
-}
-
 /* This function is used to 'wake up" the e-Paper from the deep sleep mode ---*/
 void EPD_Reset() 
 {
@@ -253,34 +163,13 @@ void EPD_loadA()
     }
 }
 
-void EPD_loadAFilp()
-{
-    // Get the index of the image data begin
-    int pos = 6;
-
-    // Enumerate all of image data bytes
-    while (pos < Buff__bufInd)
-    {
-        // Get current byte
-        int value = Buff__getByte(pos);
-
-        // Invert byte's bits in case of '2.7' e-Paper
-        if (EPD_invert) value = ~value;
-
-        // Write the byte into e-Paper's memory
-        EPD_2IN7_V2_SendData(~(byte)value);
-
-        // Increment the current byte index on 2 characters
-        pos++;
-    }
-}
-
 
 /* Show image and turn to deep sleep mode (a-type, 4.2 and 2.7 e-Paper) ------*/
 void EPD_showA() 
 {
     // Refresh
-    EPD_Send_1(0x22, 0xC4);//DISPLAY_UPDATE_CONTROL_2
+    EPD_2IN7_V2_SendCommand(0x22);//DISPLAY_UPDATE_CONTROL_2
+    EPD_2IN7_V2_SendData(0xC4);
     EPD_2IN7_V2_SendCommand(0x20);//MASTER_ACTIVATION
     EPD_2IN7_V2_SendCommand(0xFF);//TERMINATE_FRAME_READ_WRITE
     EPD_WaitUntilIdle();
