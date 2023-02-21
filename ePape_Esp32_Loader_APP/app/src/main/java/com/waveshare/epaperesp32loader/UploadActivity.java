@@ -125,12 +125,7 @@ public class UploadActivity extends AppCompatActivity
 
             for (int y = 0; y < h; y++)
                 for (int x = 0; x < w; x++, i++)
-                    if(epdInd == 25 || epdInd ==37)
-                        array[i] = getVal_7color(bmp.getPixel(x, y));
-                    else {
-                        Log.d("valueThing", "pixel: "+getVal(bmp.getPixel(x, y)));
-                        array[i] = getVal(bmp.getPixel(x, y));
-                    }
+                    array[i] = getVal(bmp.getPixel(x, y));
 
             pxInd = 0;
             xLine = 0;  //2.13inch
@@ -150,60 +145,9 @@ public class UploadActivity extends AppCompatActivity
         //-----------------------------------------------------
         private boolean handleUploadingStage()
         {
-            int epdInd = EPaperDisplay.epdInd;
 
-            // 2.13 e-Paper display
-            if ((epdInd == 3) || (epdInd == 39))
-            {
-                if(stInd == 0) return u_line(0, 0, 100);
-                //-------------------------------------------------
-                if(stInd == 1) return u_show();
-            }
-
-            // 2.13 b V4
-            if ((epdInd == 40))
-            {
-                if(stInd == 0) return u_line(0, 0, 50);
-                if(stInd == 1) return u_next();
-                if(stInd == 2) return u_line(3, 50, 50);
-                if(stInd == 3) return u_show();
-            }
-
-            // White-black e-Paper displays
-            //-------------------------------------------------
-            else if ((epdInd==0)||(epdInd==3)||(epdInd==6)||(epdInd==7)||(epdInd==9)||(epdInd==12)||
-                    (epdInd==16)||(epdInd==19)||(epdInd==22)||(epdInd==26)||(epdInd==27)||(epdInd==28))
-            {
-                if(stInd == 0) return u_data(0,0,100);
-                if(stInd == 1) return u_show();
-            }
-
-            // 7.5 colored e-Paper displays
-            //-------------------------------------------------
-            else if (epdInd>15 && epdInd < 22)
-            {
-                if(stInd == 0) return u_data(-1,0,100);
-                if(stInd == 1) return u_show();
-            }
-
-            // 5.65f colored e-Paper displays
-            //-------------------------------------------------
-            else if (epdInd == 25 || epdInd == 37)
-            {
-                if(stInd == 0) return u_data(-2,0,100);
-                if(stInd == 1) return u_show();
-            }
-
-            // Other colored e-Paper displays
-            //-------------------------------------------------
-            else
-            {
-//                if(stInd==0 && epdInd==23)return u_data(0,0,100);
-                if(stInd == 0)return u_data((epdInd == 1)? -1 : 0,0,50);
-                if(stInd == 1)return u_next();
-                if(stInd == 2)return u_data(3,50,50);
-                if(stInd == 3)return u_show();
-            }
+            if(stInd == 0) return u_data(0,0,100);
+            if(stInd == 1) return u_show();
 
             return true;
         }
@@ -245,22 +189,12 @@ public class UploadActivity extends AppCompatActivity
         //-----------------------------------------------------
         private boolean u_send(boolean next)
         {
+            Log.d("u_send", "sending: "+next);
             if (!BluetoothHelper.btThread.write(buffArr, buffInd))
                 return false; // Command sending is failed
 
             if(next) stInd++; // Go to next stage if it is needed
             return true;      // Command is sent successful
-        }
-
-        // Next stage command
-        //-----------------------------------------------------
-        private boolean u_next()
-        {
-            buffInd = 1;           // Size of command in bytes
-            buffArr[0] = (byte)'N';// Name of command (Next)
-
-            pxInd = 0;
-            return u_send(true);
         }
 
         // The finishing command
@@ -335,6 +269,7 @@ public class UploadActivity extends AppCompatActivity
 
                     buffArr[buffInd++] = (byte)(v     );
                     buffArr[buffInd++] = (byte)(v >> 8);
+                    Log.d("u_data", "if 1");
                 }
             }
             else if(c == -2)
@@ -351,6 +286,7 @@ public class UploadActivity extends AppCompatActivity
 
                     buffArr[buffInd++] = (byte)(v     );
                     buffArr[buffInd++] = (byte)(v >> 8);
+                    Log.d("u_data", "if 2");
                 }
             }
             else
@@ -365,29 +301,39 @@ public class UploadActivity extends AppCompatActivity
                         pxInd++;
                     }
 
-                    buffArr[buffInd++] = (byte)v;
+                    byte firstNumber = (byte) ((v >> 4) & (byte) 0x0F);
+                    byte secondNumber = (byte) (v & 0x0F);
+
+                    buffArr[buffInd++] = convertByteGray(firstNumber);
+                    buffArr[buffInd++] = convertByteGray(secondNumber);
                 }
             }
 
             return u_load(k1, k2);
         }
 
-        // Pixel format converting (2.13 e-Paper display)
-        //-----------------------------------------------------
-        private boolean u_line(int c, int k1, int k2)
-        {
-            buffInd = 6; // pixels' data offset
-            while ((pxInd < array.length) && (buffInd < 246))     // 15*16+6 ，16*8 = 128
-            {
-                int v = 0;
+        private byte convertByteGray(Byte b){
 
-                for (int i = 0; (i < 8) && (xLine < 122); i++, xLine++){
-                    if (array[pxInd++] != c) v |= (128 >> i);
-                }
-                if(xLine >= 122 )xLine = 0;
-                buffArr[buffInd++] = (byte)v;
+            if      (b == 0b0000) return (byte) 0b10101010;
+            else if (b == 0b0001) return (byte) 0b10101011;
+            else if (b == 0b0010) return (byte) 0b10101110;
+            else if (b == 0b0100) return (byte) 0b10111010;
+            else if (b == 0b1000) return (byte) 0b11101010;
+            else if (b == 0b0011) return (byte) 0b10101111;
+            else if (b == 0b0101) return (byte) 0b10111011;
+            else if (b == 0b1001) return (byte) 0b11101011;
+            else if (b == 0b0110) return (byte) 0b10111110;
+            else if (b == 0b1010) return (byte) 0b11101110;
+            else if (b == 0b1100) return (byte) 0b11111010;
+            else if (b == 0b0111) return (byte) 0b10111111;
+            else if (b == 0b1011) return (byte) 0b11101111;
+            else if (b == 0b1101) return (byte) 0b11111011;
+            else if (b == 0b1110) return (byte) 0b11111110;
+            else if (b == 0b1111) return (byte) 0b11111111;
+            else{
+                Log.d("convertingThing", "MISSING! byte: "+(byte)b);
             }
-            return u_load(k1, k2);
+            return (byte) 0b00000000;
         }
 
         //-------------------------------------------

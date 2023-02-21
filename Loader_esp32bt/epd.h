@@ -86,10 +86,13 @@ void EPD_WaitUntilIdle()
 }
 
 /* Waiting the e-Paper is ready for further instructions ---------------------*/
-void EPD_WaitUntilIdle_high() 
+static void EPD_2IN7_V2_ReadBusy(void)
 {
-    //1: busy, 0: idle
-    while(digitalRead(EPD_BUSY_PIN) == 1) delay(100);    
+    do {
+        if(digitalRead(EPD_BUSY_PIN) == 0)
+			break;
+    } while(1);
+    delay(20);
 }
 
 /* This function is used to 'wake up" the e-Paper from the deep sleep mode ---*/
@@ -125,42 +128,52 @@ void EPD_loadA()
         if (EPD_invert) value = ~value;
 
         // Write the byte into e-Paper's memory
-        EPD_2IN7_V2_SendData((byte)value);
+        EPD_2IN7_V2_SendData((byte)0b11111111);
+        EPD_2IN7_V2_SendData((byte)0b11111111);
 
         // Increment the current byte index on 2 characters
         pos++;
     }
 }
 
-/* Show image and turn to deep sleep mode (a-type, 4.2 and 2.7 e-Paper) ------*/
-void EPD_showA() 
-{
-    // Refresh
-    EPD_2IN7_V2_SendCommand(0x22);//DISPLAY_UPDATE_CONTROL_2
-    EPD_2IN7_V2_SendData(0xC4);
-    EPD_2IN7_V2_SendCommand(0x20);//MASTER_ACTIVATION
-    EPD_2IN7_V2_SendCommand(0xFF);//TERMINATE_FRAME_READ_WRITE
-    EPD_WaitUntilIdle();
 
-    // Sleep
-    EPD_2IN7_V2_SendCommand(0x10);//DEEP_SLEEP_MODE
-    EPD_WaitUntilIdle();
-}
 
-/* The set of pointers on 'init', 'load' and 'show' functions, title and code */
-struct EPD_dispInfo
+UBYTE LUT_DATA_4Gray[159] =
 {
-    int(*init)(); // Initialization
-    void(*chBk)();// Black channel loading
-    int next;     // Change channel code
-    void(*chRd)();// Red channel loading
-    void(*show)();// Show and sleep
-    char*title;   // Title of an e-Paper
+0x40,	0x48,	0x80,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,
+0x8,	0x48,	0x10,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,
+0x2,	0x48,	0x4,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,
+0x20,	0x48,	0x1,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,
+0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,
+0xA,	0x19,	0x0,	0x3,	0x8,	0x0,	0x0,					
+0x14,	0x1,	0x0,	0x14,	0x1,	0x0,	0x3,					
+0xA,	0x3,	0x0,	0x8,	0x19,	0x0,	0x0,					
+0x1,	0x0,	0x0,	0x0,	0x0,	0x0,	0x1,					
+0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,					
+0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,					
+0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,					
+0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,					
+0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,					
+0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,					
+0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,					
+0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,					
+0x22,	0x22,	0x22,	0x22,	0x22,	0x22,	0x0,	0x0,	0x0,			
+0x22,	0x17,	0x41,	0x0,	0x32,	0x1C
 };
+
+static void EPD_2IN7_V2_Lut(void)
+{
+    unsigned int count;
+    EPD_2IN7_V2_SendCommand(0x32); //vcom
+    for(count = 0; count < 153; count++) {
+        EPD_2IN7_V2_SendData(LUT_DATA_4Gray[count]);
+    }
+}
 
 int EPD_2IN7_V2_Init(void)
 {
-    EPD_2IN7_V2_Reset();
+  /*
+  EPD_2IN7_V2_Reset();
     EPD_WaitUntilIdle_high();
 
     EPD_2IN7_V2_SendCommand(0x12); //SWRESET
@@ -181,20 +194,90 @@ int EPD_2IN7_V2_Init(void)
 
     EPD_2IN7_V2_SendCommand(0x24);
     delay(2);
+    */
+    EPD_2IN7_V2_Reset();
+
+	EPD_2IN7_V2_ReadBusy();
+	EPD_2IN7_V2_SendCommand(0x12); // soft reset
+	EPD_2IN7_V2_ReadBusy();
+
+	EPD_2IN7_V2_SendCommand(0x74); //set analog block control       
+	EPD_2IN7_V2_SendData(0x54);
+	EPD_2IN7_V2_SendCommand(0x7E); //set digital block control          
+	EPD_2IN7_V2_SendData(0x3B);
+
+	EPD_2IN7_V2_SendCommand(0x01); //Driver output control      
+	EPD_2IN7_V2_SendData(0x07);
+	EPD_2IN7_V2_SendData(0x01);
+	EPD_2IN7_V2_SendData(0x00);
+
+	EPD_2IN7_V2_SendCommand(0x11); //data entry mode       
+	EPD_2IN7_V2_SendData(0x03);
+
+	EPD_2IN7_V2_SendCommand(0x44); //set Ram-X address start/end position   
+	EPD_2IN7_V2_SendData(0x00);
+	EPD_2IN7_V2_SendData(0x15);    //0x15-->(21+1)*8=176
+
+	EPD_2IN7_V2_SendCommand(0x45); //set Ram-Y address start/end position          
+	EPD_2IN7_V2_SendData(0x00);
+	EPD_2IN7_V2_SendData(0x00);
+	EPD_2IN7_V2_SendData(0x07);//0x0107-->(263+1)=264
+	EPD_2IN7_V2_SendData(0x01);
+
+
+	EPD_2IN7_V2_SendCommand(0x3C); //BorderWavefrom
+	EPD_2IN7_V2_SendData(0x00);	
+
+
+	EPD_2IN7_V2_SendCommand(0x2C);     //VCOM Voltage
+	EPD_2IN7_V2_SendData(LUT_DATA_4Gray[158]);    //0x1C
+
+
+	EPD_2IN7_V2_SendCommand(0x3F); //EOPQ    
+	EPD_2IN7_V2_SendData(LUT_DATA_4Gray[153]);
+	
+	EPD_2IN7_V2_SendCommand(0x03); //VGH      
+	EPD_2IN7_V2_SendData(LUT_DATA_4Gray[154]);
+
+	EPD_2IN7_V2_SendCommand(0x04); //      
+	EPD_2IN7_V2_SendData(LUT_DATA_4Gray[155]); //VSH1   
+	EPD_2IN7_V2_SendData(LUT_DATA_4Gray[156]); //VSH2   
+	EPD_2IN7_V2_SendData(LUT_DATA_4Gray[157]); //VSL   
+   
+	EPD_2IN7_V2_Lut(); //LUT
+
+	
+	EPD_2IN7_V2_SendCommand(0x4E);   // set RAM x address count to 0;
+	EPD_2IN7_V2_SendData(0x00);
+	EPD_2IN7_V2_SendCommand(0x4F);   // set RAM y address count to 0X199;    
+	EPD_2IN7_V2_SendData(0x00);
+	EPD_2IN7_V2_SendData(0x00);
+    EPD_2IN7_V2_ReadBusy();
 	return 0;
 }
 
 void EPD_2IN7_V2_Show(void)
 {
     EPD_2IN7_V2_SendCommand(0x22);  //Display Update Control
-    EPD_2IN7_V2_SendData(0XF7);
+    EPD_2IN7_V2_SendData(0xC7);
     EPD_2IN7_V2_SendCommand(0x20);  //Activate Display Update Sequence
-    EPD_WaitUntilIdle_high();
+    EPD_2IN7_V2_ReadBusy();
     delay(2);
     Serial.print("EPD_2IN7_V2_Show END\r\n");
     EPD_2IN7_V2_SendCommand(0X07);  	//deep sleep
     EPD_2IN7_V2_SendData(0xA5);
 }
+
+/* The set of pointers on 'init', 'load' and 'show' functions, title and code */
+struct EPD_dispInfo
+{
+    int(*init)(); // Initialization
+    void(*chBk)();// Black channel loading
+    int next;     // Change channel code
+    void(*chRd)();// Red channel loading
+    void(*show)();// Show and sleep
+    char*title;   // Title of an e-Paper
+};
 
 /* Array of sets describing the usage of e-Papers ----------------------------*/
 EPD_dispInfo EPD_dispMass[] =

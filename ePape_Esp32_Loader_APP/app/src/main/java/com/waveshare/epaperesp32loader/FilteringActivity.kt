@@ -48,17 +48,9 @@ class FilteringActivity : AppCompatActivity() {
         findViewById<View>(R.id.btn_wbrl).isEnabled = redIsEnabled
         findViewById<View>(R.id.btn_wbrd).isEnabled = redIsEnabled
 
-        // Disable unavailable palettes just for 5.65f e-Paper
-        //------------------------------------------
-        if (EPaperDisplay.epdInd == 25 || EPaperDisplay.epdInd == 37) {
-            redIsEnabled = false
-            findViewById<View>(R.id.btn_wb_l).isEnabled = redIsEnabled
-            findViewById<View>(R.id.btn_wb_d).isEnabled = redIsEnabled
-        }
-
         findViewById<SeekBar>(R.id.seekbar).setOnSeekBarChangeListener(object: OnSeekBarChangeListener{
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                run(true, false, (p1-50)/10)
+                run(true, false, (p1*4-50)/10)
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {

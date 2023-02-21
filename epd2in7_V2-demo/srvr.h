@@ -14,11 +14,17 @@
 
 /* Library includes ----------------------------------------------------------*/
 #include <BluetoothSerial.h>
+#include "GUI_Paint.h"
 
 bool Srvr__btIsOn;// It's true when bluetooth is on
 bool Srvr__btConn;// It's true when bluetooth has connected client 
 int  Srvr__msgPos;// Position in buffer from where data is expected
 int  Srvr__length;// Length of loaded data
+
+UBYTE *BlackImage;
+UWORD Imagesize;
+unsigned char* arr = (unsigned char *) malloc(sizeof(unsigned char) * 11616);
+int bytePosition;
 
 /* Client ---------------------------------------------------------------------*/
 BluetoothSerial Srvr__btClient; // Bluetooth client 
@@ -48,7 +54,14 @@ void Srvr__flush()
 
 /* Project includes ----------------------------------------------------------*/
 #include "buff.h"       // POST request data accumulator
-#include "epd.h"        // e-Paper driver
+#include "EPD_2in7_V2.h"        // e-Paper driver
+
+void printTreasure(uint16_t X_Center, uint16_t Y_Center)
+{
+    Paint_DrawCircle(X_Center, Y_Center, 5, WHITE, DOT_PIXEL_5X5, DRAW_FILL_FULL);
+    Paint_DrawCircle(X_Center, Y_Center, 4, GRAY2, DOT_PIXEL_5X5, DRAW_FILL_FULL);
+    Paint_DrawCircle(X_Center, Y_Center, 2, GRAY4, DOT_PIXEL_5X5, DRAW_FILL_FULL);
+}
 
 bool Srvr__btSetup()                                              
 {
@@ -114,17 +127,20 @@ bool Srvr__loop()
     // Initialization
     if (Buff__bufArr[0] == 'I')
     {
+        DEV_Module_Init();
         Srvr__length = 0;
-
-        // Getting of e-Paper's type
-        EPD_dispIndex = 0;
-
-        // Print log message: initialization of e-Paper (e-Paper's type)
-        Serial.printf("<<<EPD %s", EPD_dispMass[EPD_dispIndex].title);
-
+        bytePosition = 0;
 
         // Initialization
-        EPD_dispInit();
+        free(BlackImage);
+        Imagesize = ((EPD_2IN7_V2_WIDTH % 4 == 0)? (EPD_2IN7_V2_WIDTH / 4 ): (EPD_2IN7_V2_WIDTH / 4 + 1)) * EPD_2IN7_V2_HEIGHT;
+        if((BlackImage = (UBYTE *)malloc(Imagesize)) == NULL) {
+            while (1);
+        }
+        EPD_2IN7_V2_Init_4GRAY();
+        Paint_NewImage(BlackImage, EPD_2IN7_V2_WIDTH, EPD_2IN7_V2_HEIGHT, 90, WHITE);
+        Paint_SetScale(4);
+        Paint_Clear(0xff);
 
         Buff__bufInd = 0;
         Srvr__flush();
@@ -136,6 +152,18 @@ bool Srvr__loop()
         // Print log message: image loading
         Serial.print("<<<LOAD");
         int dataSize = Buff__getWord(1);
+
+        int pos = 6;
+
+        while (pos < Buff__bufInd){
+          int value = Buff__getByte(pos);
+          arr[bytePosition] = value;
+          pos++;
+          bytePosition++;
+        }
+
+        Serial.printf("going to add data to position %d", bytePosition);
+
         Srvr__length += dataSize;
                 
         if ((Buff__bufInd < dataSize) || Srvr__length != Buff__getN3(3))
@@ -147,41 +175,6 @@ bool Srvr__loop()
             Srvr__write("Error!");
             return true;
         }
-       
-        // Load data into the e-Paper 
-        // if there is loading function for current channel (black or red)
-        if (EPD_dispLoad != 0) EPD_dispLoad();     
-
-        Buff__bufInd = 0;
-        Srvr__flush();
-    }
-
-    // Initialize next channel
-    else if (Buff__bufArr[0] == 'N')
-    {
-        // Print log message: next data channel
-        Serial.print("<<<NEXT");
-
-        // Instruction code for for writting data into 
-        // e-Paper's memory
-        int code = EPD_dispMass[EPD_dispIndex].next;
-
-        // e-Paper '2.7' (index 8) needs inverting of image data bits
-        EPD_invert = (EPD_dispIndex == 0);
-
-        // If the instruction code isn't '-1', then...
-        if (code != -1)
-        {
-            // Print log message: instruction code
-            Serial.printf(" %d", code);
-
-            // Do the selection of the next data channel
-            EPD_2IN7_V2_SendCommand(code);
-            delay(2);
-        }
-
-        // Setup the function for loading choosen channel's data
-        EPD_dispLoad = EPD_dispMass[EPD_dispIndex].chRd;
 
         Buff__bufInd = 0;
         Srvr__flush();
@@ -189,8 +182,27 @@ bool Srvr__loop()
 
     // Show loaded picture
     else if (Buff__bufArr[0] == 'S')
-    {
-        EPD_dispMass[EPD_dispIndex].show();
+    {    
+        Paint_DrawBitMap(arr);
+
+        Paint_DrawLine(105, 95, 50, 45, GRAY3, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(50, 45, 80, 25, GRAY3, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(80, 25, 35, 15, GRAY3, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(35, 15, 25, 50, GRAY3, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(25, 50, 65, 100, GRAY3, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(65, 100, 100, 50, GRAY3, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(100, 50, 180, 120, GRAY3, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+
+        Paint_DrawCircle(105, 95, 5, BLACK, DOT_PIXEL_5X5, DRAW_FILL_FULL);
+        Paint_DrawCircle(105, 95, 8, BLACK, DOT_PIXEL_1X1, DRAW_FILL_EMPTY);
+
+        printTreasure(150, 150);
+        printTreasure(120, 140);
+        printTreasure(100, 130);
+        printTreasure(200, 160);
+
+
+        EPD_2IN7_V2_4GrayDisplay(BlackImage);
                 
         Buff__bufInd = 0;
         Srvr__flush();
