@@ -1,6 +1,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "DEV_Config.h"
-#include "EPD.h"
+#include "EPD_2in7_V2.h"
 #include "GUI_Paint.h"
 #include "imagedata.h"
 #include <stdlib.h>
